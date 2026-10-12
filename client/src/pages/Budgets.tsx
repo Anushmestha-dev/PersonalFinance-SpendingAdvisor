@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchApi } from '../lib/api';
+import { formatINR } from '../lib/currency';
 import { Modal } from '../components/ui/Modal';
 import toast from 'react-hot-toast';
 
@@ -78,7 +79,7 @@ export const Budgets = () => {
                 <div className="flex justify-between items-center">
                   <h3 className="font-semibold">{b.category.name}</h3>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-500">${b.spent.toFixed(0)} / ${b.budgeted.toFixed(0)}</span>
+                    <span className="text-sm text-gray-500">{formatINR(b.spent, 0)} / {formatINR(b.budgeted, 0)}</span>
                     <button onClick={async () => {
                       if (!confirm('Delete this budget?')) return;
                       try {
@@ -93,7 +94,7 @@ export const Budgets = () => {
                   <div className={`h-full ${colorClass} transition-all`} style={{ width: `${percentage}%` }}></div>
                 </div>
                 <div className="text-xs text-right text-gray-500">
-                  {b.remaining >= 0 ? `$${b.remaining.toFixed(0)} remaining` : `$${Math.abs(b.remaining).toFixed(0)} over budget`}
+                  {b.remaining >= 0 ? `${formatINR(b.remaining, 0)} remaining` : `${formatINR(Math.abs(b.remaining), 0)} over budget`}
                 </div>
               </div>
             );
@@ -110,7 +111,7 @@ export const Budgets = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Monthly Amount</label>
+            <label className="block text-sm font-medium mb-1">Monthly Amount (₹)</label>
             <input type="number" step="0.01" min="0.01" required value={amount} onChange={e => setAmount(e.target.value)} className="w-full px-3 py-2 border dark:border-gray-600 rounded-md bg-transparent" />
           </div>
           <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Budget</button>

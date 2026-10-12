@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchApi } from '../lib/api';
+import { formatINR } from '../lib/currency';
 import { Modal } from '../components/ui/Modal';
 import toast from 'react-hot-toast';
 
@@ -62,7 +63,7 @@ export const Accounts = () => {
                 <span className="text-sm px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full">{a.type}</span>
               </div>
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                ${Number(a.balance).toFixed(2)}
+                {formatINR(a.balance)}
               </div>
             </div>
           ))
@@ -85,7 +86,7 @@ export const Accounts = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Starting Balance</label>
+            <label className="block text-sm font-medium mb-1">Starting Balance (₹)</label>
             <input type="number" step="0.01" required value={balance} onChange={e => setBalance(e.target.value)} className="w-full px-3 py-2 border dark:border-gray-600 rounded-md bg-transparent" />
           </div>
           <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Account</button>

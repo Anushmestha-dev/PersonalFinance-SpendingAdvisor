@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchApi } from '../lib/api';
+import { formatSignedINR } from '../lib/currency';
 import { Modal } from '../components/ui/Modal';
 import toast from 'react-hot-toast';
 
@@ -172,13 +173,13 @@ export const Transactions = () => {
               </thead>
               <tbody>
                 {transactions.map(t => (
-                  <tr key={t.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750">
+                  <tr key={t.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors">
                     <td className="p-4 text-sm whitespace-nowrap">{new Date(t.date).toLocaleDateString()}</td>
                     <td className="p-4 text-sm">{t.description || '-'}</td>
                     <td className="p-4 text-sm">{t.account?.name || '-'}</td>
                     <td className="p-4 text-sm">{t.category?.name || '-'}</td>
                     <td className={`p-4 text-sm font-medium whitespace-nowrap ${t.type === 'INCOME' ? 'text-green-600' : 'text-gray-900 dark:text-gray-100'}`}>
-                      {t.type === 'INCOME' ? '+' : '-'}${Number(t.amount).toFixed(2)}
+                      {formatSignedINR(t.amount, t.type)}
                     </td>
                     <td className="p-4 text-sm space-x-3 whitespace-nowrap">
                       <button onClick={() => openEditModal(t)} className="text-blue-500 hover:underline">Edit</button>
@@ -231,7 +232,7 @@ export const Transactions = () => {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Amount</label>
+            <label className="block text-sm font-medium mb-1">Amount (₹)</label>
             <input type="number" step="0.01" min="0.01" required value={amount} onChange={e => setAmount(e.target.value)} className="w-full px-3 py-2 border dark:border-gray-600 rounded-md bg-transparent" />
           </div>
           <div>

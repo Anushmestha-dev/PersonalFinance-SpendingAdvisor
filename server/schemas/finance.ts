@@ -4,7 +4,7 @@ export const AccountSchema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.enum(["DEPOSITORY", "CREDIT", "INVESTMENT", "LOAN"]),
   balance: z.number(),
-  currency: z.string().default("USD"),
+  currency: z.string().default("INR"),
 });
 
 export const CategorySchema = z.object({

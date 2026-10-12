@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { fetchApi } from '../lib/api';
-import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
+import { formatINR, formatSignedINR } from '../lib/currency';
+import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, Sector } from 'recharts';
 import { Link } from 'react-router-dom';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#a855f7', '#ec4899', '#f43f5e', '#8b5cf6'];
@@ -10,6 +11,44 @@ export const Dashboard = () => {
   const [budgets, setBudgets] = useState<any[]>([]);
   const [goals, setGoals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const renderActiveShape = (props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+    return (
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius - 3}
+        outerRadius={outerRadius + 8}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+        style={{
+          filter: 'drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.45))',
+          cursor: 'pointer',
+        }}
+      />
+    );
+  };
+
+  const renderInactiveShape = (props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+    return (
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+        opacity={0.35}
+        style={{
+          cursor: 'pointer',
+        }}
+      />
+    );
+  };
 
   useEffect(() => {
     Promise.all([
@@ -38,25 +77,25 @@ export const Dashboard = () => {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h3 className="text-gray-500 text-sm font-medium mb-1">Total Balance</h3>
           <p className={`text-2xl font-bold ${data.totalBalance < 0 ? 'text-red-500' : 'text-gray-900 dark:text-gray-100'}`}>
-            ${data.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatINR(data.totalBalance)}
           </p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h3 className="text-gray-500 text-sm font-medium mb-1">Income This Month</h3>
           <p className="text-2xl font-bold text-green-600">
-            +${data.thisMonthIncome.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            +{formatINR(data.thisMonthIncome)}
           </p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h3 className="text-gray-500 text-sm font-medium mb-1">Expenses This Month</h3>
           <p className="text-2xl font-bold text-red-600">
-            -${data.thisMonthExpense.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            -{formatINR(data.thisMonthExpense)}
           </p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h3 className="text-gray-500 text-sm font-medium mb-1">Net Savings</h3>
           <p className={`text-2xl font-bold ${data.netSavings >= 0 ? 'text-blue-600' : 'text-red-500'}`}>
-            ${data.netSavings.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatINR(data.netSavings)}
           </p>
         </div>
       </div>
@@ -69,8 +108,8 @@ export const Dashboard = () => {
             <BarChart data={data.last6Months} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
               <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} tickMargin={10} />
-              <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={(v) => `$${v}`} />
-              <Tooltip cursor={{fill: 'transparent'}} contentStyle={{backgroundColor: '#1f2937', borderColor: '#374151', color: '#fff'}} />
+              <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={(v) => `₹${v}`} />
+              <Tooltip cursor={{fill: 'transparent'}} formatter={(value: any) => formatINR(value)} contentStyle={{backgroundColor: '#1f2937', borderColor: '#374151', color: '#fff'}} />
               <Legend wrapperStyle={{ paddingTop: '20px' }} />
               <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
               <Bar dataKey="expense" name="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
@@ -86,12 +125,20 @@ export const Dashboard = () => {
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={data.categoryPie} innerRadius={80} outerRadius={120} paddingAngle={2} dataKey="value">
+                <Pie
+                  data={data.categoryPie}
+                  innerRadius={80}
+                  outerRadius={120}
+                  paddingAngle={2}
+                  dataKey="value"
+                  activeShape={renderActiveShape}
+                  inactiveShape={renderInactiveShape}
+                >
                   {data.categoryPie.map((_: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} contentStyle={{backgroundColor: '#1f2937', borderColor: '#374151', color: '#fff'}} />
+                <Tooltip formatter={(value: any) => formatINR(value)} contentStyle={{backgroundColor: '#1f2937', borderColor: '#374151', color: '#fff'}} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -112,13 +159,13 @@ export const Dashboard = () => {
             <table className="w-full text-left">
               <tbody>
                 {data.recentTransactions.map((t: any) => (
-                  <tr key={t.id} className="border-b last:border-0 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750">
+                  <tr key={t.id} className="border-b last:border-0 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors">
                     <td className="p-4">
                       <div className="font-medium text-sm">{t.description || t.category?.name || 'Transaction'}</div>
                       <div className="text-xs text-gray-500">{new Date(t.date).toLocaleDateString()} • {t.account?.name}</div>
                     </td>
                     <td className={`p-4 text-right font-medium ${t.type === 'INCOME' ? 'text-green-600' : 'text-gray-900 dark:text-gray-100'}`}>
-                      {t.type === 'INCOME' ? '+' : '-'}${Number(t.amount).toFixed(2)}
+                      {formatSignedINR(t.amount, t.type)}
                     </td>
                   </tr>
                 ))}
@@ -145,7 +192,7 @@ export const Dashboard = () => {
                     <div key={b.id} className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>{b.category.name}</span>
-                        <span className="text-gray-500">${b.spent.toFixed(0)} / ${b.budgeted.toFixed(0)}</span>
+                        <span className="text-gray-500">{formatINR(b.spent, 0)} / {formatINR(b.budgeted, 0)}</span>
                       </div>
                       <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div className={`h-full ${colorClass} transition-all`} style={{ width: `${percentage}%` }}></div>

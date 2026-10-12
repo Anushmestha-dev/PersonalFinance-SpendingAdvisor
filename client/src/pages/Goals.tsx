@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchApi } from '../lib/api';
+import { formatINR } from '../lib/currency';
 import { Modal } from '../components/ui/Modal';
 import toast from 'react-hot-toast';
 
@@ -125,14 +126,14 @@ export const Goals = () => {
                   </div>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Target: ${target.toLocaleString()}</span>
+                  <span className="text-gray-500">Target: {formatINR(target, 0)}</span>
                   <span className="text-blue-600 font-medium">{percentage.toFixed(1)}%</span>
                 </div>
                 <div className="h-3 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div className="h-full bg-blue-500 transition-all" style={{ width: `${percentage}%` }}></div>
                 </div>
                 <div className="text-sm text-gray-500 flex justify-between items-center">
-                  <span>${saved.toLocaleString()} saved</span>
+                  <span>{formatINR(saved, 0)} saved</span>
                   <span>Due: {new Date(g.deadline).toLocaleDateString()}</span>
                 </div>
                 <button onClick={() => handleAddMoney(g)} className="w-full mt-2 py-1.5 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm">
@@ -152,11 +153,11 @@ export const Goals = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Target Amount</label>
+              <label className="block text-sm font-medium mb-1">Target Amount (₹)</label>
               <input type="number" step="0.01" min="1" required value={targetAmount} onChange={e => setTargetAmount(e.target.value)} className="w-full px-3 py-2 border dark:border-gray-600 rounded-md bg-transparent" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Saved Amount</label>
+              <label className="block text-sm font-medium mb-1">Saved Amount (₹)</label>
               <input type="number" step="0.01" min="0" required value={savedAmount} onChange={e => setSavedAmount(e.target.value)} className="w-full px-3 py-2 border dark:border-gray-600 rounded-md bg-transparent" />
             </div>
           </div>
