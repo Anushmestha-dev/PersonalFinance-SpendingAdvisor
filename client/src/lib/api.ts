@@ -1,5 +1,6 @@
 export const fetchApi = async (url: string, options: RequestInit = {}) => {
   const res = await fetch(url, {
+    credentials: 'include',
     ...options,
     headers: {
       'Content-Type': 'application/json',
