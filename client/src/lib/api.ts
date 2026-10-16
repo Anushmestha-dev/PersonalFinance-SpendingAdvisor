@@ -1,5 +1,8 @@
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 export const fetchApi = async (url: string, options: RequestInit = {}) => {
-  const res = await fetch(url, {
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+  const res = await fetch(fullUrl, {
     credentials: 'include',
     ...options,
     headers: {

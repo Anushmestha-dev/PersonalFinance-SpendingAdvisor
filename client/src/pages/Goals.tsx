@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { fetchApi } from '../lib/api';
 import { formatINR } from '../lib/currency';
 import { Modal } from '../components/ui/Modal';
+import { CardSkeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 import toast from 'react-hot-toast';
+import { Target } from 'lucide-react';
 
 export const Goals = () => {
   const [goals, setGoals] = useState<any[]>([]);
@@ -24,7 +27,7 @@ export const Goals = () => {
       const data = await fetchApi('/api/goals');
       setGoals(data);
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || 'Failed to load savings goals');
     } finally {
       setLoading(false);
     }
@@ -58,15 +61,15 @@ export const Goals = () => {
       const payload = { name, targetAmount: parseFloat(targetAmount), savedAmount: parseFloat(savedAmount), deadline };
       if (editingId) {
         await fetchApi(`/api/goals/${editingId}`, { method: 'PUT', body: JSON.stringify(payload) });
-        toast.success('Goal updated');
+        toast.success('Goal updated successfully');
       } else {
         await fetchApi('/api/goals', { method: 'POST', body: JSON.stringify(payload) });
-        toast.success('Goal added');
+        toast.success('Goal created successfully');
       }
       setIsModalOpen(false);
       loadData();
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || 'Failed to save goal');
     }
   };
 
@@ -74,42 +77,62 @@ export const Goals = () => {
     if (!confirm('Are you sure you want to delete this goal?')) return;
     try {
       await fetchApi(`/api/goals/${id}`, { method: 'DELETE' });
-      toast.success('Goal deleted');
+      toast.success('Goal deleted successfully');
       loadData();
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || 'Failed to delete goal');
     }
   };
 
   const handleAddMoney = async (g: any) => {
-    const amountStr = prompt('Enter amount to add:');
+    const amountStr = prompt(`Enter amount to add to "${g.name}":`);
     if (!amountStr) return;
     const addAmt = parseFloat(amountStr);
-    if (isNaN(addAmt) || addAmt <= 0) return toast.error('Invalid amount');
+    if (isNaN(addAmt) || addAmt <= 0) return toast.error('Invalid amount. Must be a positive number.');
     try {
       await fetchApi(`/api/goals/${g.id}`, { 
         method: 'PUT', 
         body: JSON.stringify({ name: g.name, targetAmount: g.targetAmount, savedAmount: parseFloat(g.savedAmount) + addAmt, deadline: g.deadline }) 
       });
-      toast.success('Money added to goal');
+      toast.success(`Successfully added ${formatINR(addAmt)} to "${g.name}"`);
       loadData();
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || 'Failed to add money to goal');
     }
   };
-
-  if (loading) return <div className="p-8 text-center">Loading goals...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Savings Goals</h1>
-        <button onClick={openAddModal} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Add Goal</button>
+        <div>
+          <h1 className="text-2xl font-bold">Savings Goals</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Track your progress towards important financial milestones</p>
+        </div>
+        <button
+          onClick={openAddModal}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm"
+        >
+          Add Goal
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {goals.length === 0 ? (
-          <div className="col-span-full p-8 text-center text-gray-500 bg-white dark:bg-gray-800 rounded-lg shadow">No active savings goals.</div>
+        {loading ? (
+          <>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </>
+        ) : goals.length === 0 ? (
+          <div className="col-span-full">
+            <EmptyState
+              icon={Target}
+              title="No active savings goals"
+              description="Create a savings target for an emergency fund, gadget, vacation, or investment."
+              actionText="Add Goal"
+              onAction={openAddModal}
+            />
+          </div>
         ) : (
           goals.map(g => {
             const saved = Number(g.savedAmount);

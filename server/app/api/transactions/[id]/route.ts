@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
 import { getCurrentUser } from '../../../../lib/auth';
 import { TransactionSchema } from '../../../../schemas/finance';
+import { clearUserInsightsCache } from '../../../../lib/insights-cache';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -57,6 +58,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       where: { id },
       data: parsed.data,
     });
+    clearUserInsightsCache(user.id);
     return NextResponse.json(updated);
   } catch (error) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -78,5 +80,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   }
 
   await prisma.transaction.delete({ where: { id } });
+  clearUserInsightsCache(user.id);
   return NextResponse.json({ success: true });
 }

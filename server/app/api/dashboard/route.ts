@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { getCurrentUser } from '../../../lib/auth';
+import { calculateTotalBalance } from '../../../lib/balance';
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -12,26 +13,13 @@ export async function GET(request: Request) {
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
   try {
-    // 1. Total Balance logic
+    // 1. Total Balance logic using shared balance utility
     const accounts = await prisma.account.findMany({
       where: { userId: user.id },
       include: { transactions: true }
     });
 
-    let totalBalance = 0;
-    accounts.forEach(a => {
-      const income = a.transactions.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + Number(t.amount), 0);
-      const expense = a.transactions.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + Number(t.amount), 0);
-      
-      let computed = 0;
-      if (a.type === 'LOAN' || a.type === 'CREDIT') {
-        computed = Number(a.balance) + expense - income;
-        totalBalance -= computed; // debt reduces net worth
-      } else {
-        computed = Number(a.balance) + income - expense;
-        totalBalance += computed;
-      }
-    });
+    const totalBalance = calculateTotalBalance(accounts);
 
     // 2. This month income/expense
     const thisMonthTransactions = await prisma.transaction.findMany({

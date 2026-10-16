@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { getCurrentUser } from '../../../lib/auth';
 import { BudgetSchema } from '../../../schemas/finance';
+import { clearUserInsightsCache } from '../../../lib/insights-cache';
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -58,6 +59,8 @@ export async function POST(request: Request) {
         year
       }
     });
+
+    clearUserInsightsCache(user.id);
 
     return NextResponse.json(budget, { status: 201 });
   } catch (error) {

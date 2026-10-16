@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { fetchApi } from '../lib/api';
 import { formatINR } from '../lib/currency';
 import { Modal } from '../components/ui/Modal';
+import { CardSkeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 import toast from 'react-hot-toast';
+import { PieChart } from 'lucide-react';
 
 export const Budgets = () => {
   const [summary, setSummary] = useState<any[]>([]);
@@ -27,7 +30,7 @@ export const Budgets = () => {
       setCategories(catRes.filter((c: any) => c.type === 'EXPENSE'));
       if (catRes.length > 0) setCategoryId(catRes.find((c: any) => c.type === 'EXPENSE')?.id || '');
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || 'Failed to load budgets');
     } finally {
       setLoading(false);
     }
@@ -53,22 +56,42 @@ export const Budgets = () => {
       setIsModalOpen(false);
       loadData();
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || 'Failed to save budget');
     }
   };
-
-  if (loading) return <div className="p-8 text-center">Loading budgets...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Monthly Budgets</h1>
-        <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Set Budget</button>
+        <div>
+          <h1 className="text-2xl font-bold">Monthly Budgets</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Control category spending and stay within your limits</p>
+        </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm"
+        >
+          Set Budget
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {summary.length === 0 ? (
-          <div className="col-span-full p-8 text-center text-gray-500 bg-white dark:bg-gray-800 rounded-lg shadow">No budgets set for this month.</div>
+        {loading ? (
+          <>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </>
+        ) : summary.length === 0 ? (
+          <div className="col-span-full">
+            <EmptyState
+              icon={PieChart}
+              title="No budgets set for this month"
+              description="Establish monthly spending limits on your categories to avoid overspending."
+              actionText="Set Budget"
+              onAction={() => setIsModalOpen(true)}
+            />
+          </div>
         ) : (
           summary.map(b => {
             const percentage = Math.min((b.spent / b.budgeted) * 100, 100);

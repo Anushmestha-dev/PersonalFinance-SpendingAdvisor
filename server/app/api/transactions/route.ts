@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { getCurrentUser } from '../../../lib/auth';
 import { TransactionSchema } from '../../../schemas/finance';
+import { clearUserInsightsCache } from '../../../lib/insights-cache';
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -97,6 +98,8 @@ export async function POST(request: Request) {
     const transaction = await prisma.transaction.create({
       data: parsed.data
     });
+
+    clearUserInsightsCache(user.id);
 
     return NextResponse.json(transaction, { status: 201 });
   } catch (error) {

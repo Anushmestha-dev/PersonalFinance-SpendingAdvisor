@@ -2,11 +2,17 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
 import { RegisterSchema } from '../../../../schemas/auth';
 import { signToken } from '../../../../lib/auth';
+import { rateLimit } from '../../../../lib/rate-limit';
 import bcrypt from 'bcrypt';
 import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'global';
+    if (!rateLimit(`register-${ip}`, 5)) {
+      return NextResponse.json({ error: 'Too many registration attempts. Please try again later.' }, { status: 429 });
+    }
+
     const body = await request.json();
     const parsed = RegisterSchema.safeParse(body);
     

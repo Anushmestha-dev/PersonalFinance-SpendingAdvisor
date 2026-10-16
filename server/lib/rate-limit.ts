@@ -1,15 +1,22 @@
 import { LRUCache } from 'lru-cache';
 
 const tokenCache = new LRUCache<string, number>({
-  max: 500,
-  ttl: 60000, // 60 seconds
+  max: 1000,
+  ttl: 60 * 1000, // 60 seconds
 });
 
-export function rateLimit(ip: string, limit: number): boolean {
-  const currentCount = tokenCache.get(ip) || 0;
+export function rateLimit(key: string, limit: number): boolean {
+  if (process.env.DISABLE_RATE_LIMIT === 'true') {
+    return true;
+  }
+  const currentCount = tokenCache.get(key) || 0;
   if (currentCount >= limit) {
     return false;
   }
-  tokenCache.set(ip, currentCount + 1);
+  tokenCache.set(key, currentCount + 1);
   return true;
+}
+
+export function resetRateLimit(key: string): void {
+  tokenCache.delete(key);
 }
